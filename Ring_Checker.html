@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ring Checker - Z_n</title>
+<style>
+  body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:30px;color:#222}
+  .box{max-width:1000px;margin:auto;background:white;padding:28px;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.08)}
+  h1{text-align:center;margin-top:0}
+  .input{text-align:center;margin:20px 0}
+  input{width:90px;padding:10px;font-size:18px;text-align:center}
+  button{padding:11px 18px;font-size:16px;cursor:pointer;margin-left:8px}
+  .result{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+  .card{padding:15px;border:1px solid #ddd;border-radius:10px;background:#fafafa}
+  .yes{font-weight:bold}
+  .no{font-weight:bold}
+  table{border-collapse:collapse;margin:15px auto;max-width:100%;overflow:auto}
+  th,td{border:1px solid #bbb;padding:7px 10px;text-align:center}
+  th{background:#eee}
+  .section{margin-top:28px}
+  .explain{background:#f8f8f8;border-left:4px solid #555;padding:15px;line-height:1.6}
+  .small{font-size:14px;color:#666}
+  @media(max-width:700px){.result{grid-template-columns:1fr 1fr} body{padding:10px}}
+</style>
+</head>
+<body>
+<div class="box">
+<h1>RING CHECKER — Z<sub>n</sub></h1>
+<p class="small">Prototype Rekayasa Ide Aljabar Ring: pemeriksaan pembagi nol, daerah integral, invers, dan lapangan pada Z<sub>n</sub>.</p>
+
+<div class="input">
+  <label><b>Masukkan n:</b></label>
+  <input id="n" type="number" min="2" max="50" value="6">
+  <button onclick="checkRing()">Periksa</button>
+</div>
+
+<div id="output"></div>
+</div>
+
+<script>
+function checkRing(){
+  const n = Number(document.getElementById('n').value);
+  const out = document.getElementById('output');
+  if(!Number.isInteger(n) || n < 2 || n > 50){
+    out.innerHTML='<div class="explain">Masukkan bilangan bulat n antara 2 dan 50.</div>';
+    return;
+  }
+
+  const elems=[...Array(n).keys()];
+  let zeroPairs=[];
+  for(let a=1;a<n;a++){
+    for(let b=1;b<n;b++){
+      if((a*b)%n===0) zeroPairs.push([a,b]);
+    }
+  }
+
+  let inverses=[];
+  for(let a=1;a<n;a++){
+    let inv=null;
+    for(let b=1;b<n;b++){
+      if((a*b)%n===1){inv=b;break;}
+    }
+    inverses.push([a,inv]);
+  }
+
+  const isDomain=zeroPairs.length===0;
+  const isField=inverses.every(x=>x[1]!==null);
+
+  let matrix='<table><tr><th>×</th>';
+  elems.forEach(j=>matrix+=`<th>${j}</th>`);
+  matrix+='</tr>';
+  elems.forEach(i=>{
+    matrix+=`<tr><th>${i}</th>`;
+    elems.forEach(j=>matrix+=`<td>${(i*j)%n}</td>`);
+    matrix+='</tr>';
+  });
+  matrix+='</table>';
+
+  let zeroText=isDomain
+    ? 'Tidak ditemukan pembagi nol nonzero.'
+    : zeroPairs.slice(0,8).map(p=>`${p[0]} × ${p[1]} ≡ 0 (mod ${n})`).join('<br>') +
+      (zeroPairs.length>8 ? '<br>…' : '');
+
+  let invTable='<table><tr><th>Elemen a</th><th>Invers a⁻¹</th><th>Status</th></tr>';
+  inverses.forEach(([a,inv])=>{
+    invTable+=`<tr><td>${a}</td><td>${inv===null?'—':inv}</td><td>${inv===null?'Tidak ada':'Ada'}</td></tr>`;
+  });
+  invTable+='</table>';
+
+  let conclusion;
+  if(isDomain && isField){
+    conclusion=`Z<sub>${n}</sub> merupakan <b>daerah integral dan lapangan</b>.`;
+  }else if(isDomain){
+    conclusion=`Z<sub>${n}</sub> merupakan <b>daerah integral</b>, tetapi bukan lapangan.`;
+  }else{
+    conclusion=`Z<sub>${n}</sub> <b>bukan daerah integral</b> karena memiliki pembagi nol; akibatnya bukan lapangan.`;
+  }
+
+  out.innerHTML=`
+  <div class="result">
+    <div class="card"><b>Pembagi nol?</b><br><span class="${isDomain?'yes':'no'}">${isDomain?'TIDAK':'YA'}</span></div>
+    <div class="card"><b>Daerah integral?</b><br><span class="${isDomain?'yes':'no'}">${isDomain?'YA':'TIDAK'}</span></div>
+    <div class="card"><b>Semua elemen tak nol punya invers?</b><br><span class="${isField?'yes':'no'}">${isField?'YA':'TIDAK'}</span></div>
+    <div class="card"><b>Lapangan?</b><br><span class="${isField?'yes':'no'}">${isField?'YA':'TIDAK'}</span></div>
+  </div>
+
+  <div class="section"><h2>1. Tabel Perkalian Modulo ${n}</h2>${matrix}</div>
+
+  <div class="section"><h2>2. Pemeriksaan Pembagi Nol</h2>
+    <div class="explain">${zeroText}</div>
+  </div>
+
+  <div class="section"><h2>3. Pemeriksaan Invers Perkalian</h2>${invTable}</div>
+
+  <div class="section"><h2>4. Kesimpulan</h2>
+    <div class="explain">${conclusion}</div>
+  </div>`;
+}
+checkRing();
+</script>
+</body>
+</html>
